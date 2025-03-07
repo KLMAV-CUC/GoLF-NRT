@@ -1,4 +1,4 @@
-# GOLF-NRT: Integrating Global Context and Local Geometry for Few-Shot View Synthesis
+# GoLF-NRT: Integrating Global Context and Local Geometry for Few-Shot View Synthesis
 ![image](https://github.com/KLMAV-CUC/GOLF-NRT/blob/main/1view.png)
 <p align="center">Qualitative comparison of GoLF-NRT with GNT, EVE-NeRF and CaesarNeRF with 1 input views. The first, second, and third rows correspond to the Trex scene from LLFF, the Drums scene from Blender, and the CD scene from Shiny, respectively. Each image triplet includes: the reconstructed image on the left, a zoomed-in view on the upper right, and the error map corresponding to the zoomed-in view on the lower right.</p>
 
