@@ -73,8 +73,7 @@ class GoogleScannedDataset(Dataset):
         # occasionally include input image
         if np.random.choice([0, 1], p=[0.995, 0.005]):
             id_feat[np.random.choice(len(id_feat))] = id_render
-
-        # print("imgpath:",rgb_files[id_render])
+            
         rgb = imageio.imread(rgb_files[id_render]).astype(np.float32) / 255.0
 
         intrinsics = np.loadtxt(intrinsics_files[id_render])
@@ -110,8 +109,8 @@ class GoogleScannedDataset(Dataset):
         src_rgbs = np.stack(src_rgbs)
         src_cameras = np.stack(src_cameras)
 
-        if self.mode == "train" and self.random_crop:
-            rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(384,432))
+        # if self.mode == "train" and self.random_crop:
+        #     rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(384,432))
 
         return {
             "rgb": torch.from_numpy(rgb),
