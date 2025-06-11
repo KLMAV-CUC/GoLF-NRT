@@ -6,15 +6,15 @@ import torch.utils.data.distributed
 
 from torch.utils.data import DataLoader
 
-from gnt.data_loaders import dataset_dict
-from gnt.render_image import render_single_image
-from gnt.model import GNTModel
-from gnt.sample_ray import RaySamplerSingleImage
+from golf.data_loaders import dataset_dict
+from golf.render_image import render_single_image
+from golf.model import GoLFModel
+from golf.sample_ray import RaySamplerSingleImage
 from utils import img_HWC2CHW, colorize, img2psnr, lpips, ssim
 import config
 import torch.distributed as dist
-from gnt.projection import Projector
-from gnt.data_loaders.create_training_dataset import create_training_dataset
+from golf.projection import Projector
+from golf.data_loaders.create_training_dataset import create_training_dataset
 import imageio
 import tqdm
 from glob import glob
@@ -56,12 +56,9 @@ def img2video(args):
     print("saved video to {}".format(out_dir))
     writer = imageio.get_writer(out_dir, mode='I', duration=1/30)
     
-    # 循环读取多张图片
     for frame in out_frames:
-    # 将图片写入 gif 写入器中
         writer.append_data(frame)
     writer.close()
-    # imageio.mimwrite(out_dir, out_frames, fps=30, quality=8)
 
 @torch.no_grad()
 def render(args):
@@ -91,7 +88,7 @@ def render(args):
     # iterator = iter(loader)
 
     # Create GNT model
-    model = GNTModel(
+    model = GoLFModel(
         args, load_opt=not args.no_load_opt, load_scheduler=not args.no_load_scheduler
     )
     # create projector
@@ -168,16 +165,6 @@ def log_view(
     rgb_show = np.uint8(np.clip((rgb_show * 255.0), 0, 255))
     filename = os.path.join(out_folder, prefix[:-1] + "_{:03d}_render_for_video.png".format(global_step))
     imageio.imwrite(filename, rgb_show)
-
-    # if vis_depth:
-    #     depth_pred = ret["outputs_render"]["depth"].detach().cpu()
-    #     depth_show = img_HWC2CHW(colorize(depth_pred, cmap_name="jet"))
-    #     depth_show = depth_show.permute(1, 2, 0).detach().cpu().numpy()
-    #     filename = os.path.join(
-    #         out_folder, prefix[:-1] + "_{:03d}_depth.png".format(global_step)
-    #     )
-    #     imageio.imwrite(filename, depth_show)
-
 
 if __name__ == "__main__":
     parser = config.config_parser()
