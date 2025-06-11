@@ -6,15 +6,15 @@ import torch.utils.data.distributed
 
 from torch.utils.data import DataLoader
 
-from gnt.data_loaders import dataset_dict
-from gnt.render_image import render_single_image
-from gnt.model import GNTModel
-from gnt.sample_ray import RaySamplerSingleImage
+from golf.data_loaders import dataset_dict
+from golf.render_image import render_single_image
+from golf.model import GoLFModel
+from golf.sample_ray import RaySamplerSingleImage
 from utils import img_HWC2CHW, colorize, img2psnr, lpips, ssim, get_ssim
 import config
 import torch.distributed as dist
-from gnt.projection import Projector
-from gnt.data_loaders.create_training_dataset import create_training_dataset
+from golf.projection import Projector
+from golf.data_loaders.create_training_dataset import create_training_dataset
 import imageio
 
 
@@ -78,8 +78,8 @@ def eval(args):
         loader = DataLoader(dataset, batch_size=1)
         iterator = iter(loader)
 
-    # Create GNT model
-    model = GNTModel(
+    # Create GoLF model
+    model = GoLFModel(
         args, load_opt=not args.no_load_opt, load_scheduler=not args.no_load_scheduler
     )
     # create projector
@@ -168,13 +168,6 @@ def log_view(
     rgb_gt = img_HWC2CHW(gt_img)
     average_im = img_HWC2CHW(average_im)
 
-    # rgb_coarse = img_HWC2CHW(ret["outputs_coarse"]["rgb"].detach().cpu())
-    # if "depth" in ret["outputs_coarse"].keys():
-    #     depth_pred = ret["outputs_coarse"]["depth"].detach().cpu()
-    #     depth_coarse = img_HWC2CHW(colorize(depth_pred, cmap_name="jet"))
-    # else:
-    #     depth_coarse = None
-
     if ret["outputs_fine"] is not None:
         rgb_fine = img_HWC2CHW(ret["outputs_fine"]["rgb"].detach().cpu())
         if "depth" in ret["outputs_fine"].keys():
@@ -184,53 +177,17 @@ def log_view(
         rgb_fine = None
         depth_fine = None
 
-    # rgb_coarse = rgb_coarse.permute(1, 2, 0).detach().cpu().numpy()
-    # # 将图像从0-1映射回去并限定像素值在0-255之间，最后将float类型转换成uint8
-    # rgb_coarse = np.uint8(np.clip((rgb_coarse * 255.0), 0.0, 255.0))
-    # filename = os.path.join(out_folder, prefix[:-1] + "_{:03d}_coarse.png".format(global_step))
-    # imageio.imwrite(filename, rgb_coarse)
-
-    # if depth_coarse is not None:
-    #     depth_coarse = depth_coarse.permute(1, 2, 0).detach().cpu().numpy()
-    #     filename = os.path.join(
-    #         out_folder, prefix[:-1] + "_{:03d}_coarse_depth.png".format(global_step)
-    #     )
-    #     imageio.imwrite(filename, depth_coarse)
-
     if rgb_fine is not None:
         rgb_fine = rgb_fine.permute(1, 2, 0).detach().cpu().numpy()
         rgb_fine = np.uint8(np.clip((rgb_fine * 255.0), 0.0, 255.0))
         filename = os.path.join(out_folder, prefix[:-1] + "_{:03d}_fine.png".format(global_step))
         imageio.imwrite(filename, rgb_fine)
-
-    # if depth_fine is not None:
-    #     depth_fine = depth_fine.permute(1, 2, 0).detach().cpu().numpy()
-    #     filename = os.path.join(
-    #         out_folder, prefix[:-1] + "_{:03d}_fine_depth.png".format(global_step)
-    #     )
-    #     imageio.imwrite(filename, depth_fine)
-
-    # write scalar
-    # pred_rgb = (
-    #     ret["outputs_fine"]["rgb"]
-    #     if ret["outputs_fine"] is not None
-    #     else ret["outputs_coarse"]["rgb"]
-    # )
-
-    # pred_rgb = ret["outputs_coarse"]["rgb"]
     pred_rgb = ret["outputs_fine"]["rgb"]
-    # blender的验证
-    # pred_rgb = pred_rgb.permute(2,0,1)
-    # gt_img = gt_img.permute(2,0,1)
-    # pred_rgb = torch.nn.functional.pad(pred_rgb, pad=(20, 20, 8, 8), mode='constant', value=1)
-    # gt_img = torch.nn.functional.pad(gt_img, pad=(20, 20, 8, 8), mode='constant', value=1)
-    # pred_rgb = pred_rgb.permute(1,2,0)
-    # gt_img = gt_img.permute(1,2,0)
+
 
     pred_rgb = torch.clip(pred_rgb, 0.0, 1.0)
     lpips_curr_img = lpips(pred_rgb, gt_img, format="HWC").item()
     ssim_curr_img = get_ssim(pred_rgb, gt_img)
-    # ssim_curr_img = ssim(pred_rgb, gt_img, format="HWC").item()
     psnr_curr_img = img2psnr(pred_rgb.detach().cpu(), gt_img)
     print(prefix + "psnr_image: ", psnr_curr_img)
     print(prefix + "lpips_image: ", lpips_curr_img)
