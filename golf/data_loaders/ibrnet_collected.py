@@ -14,14 +14,10 @@ from .llff_data_utils import load_llff_data, batch_parse_llff_poses
 
 class IBRNetCollectedDataset(Dataset):
     def __init__(self, args, mode, random_crop=True, **kwargs):
-        self.folder_path1 = "../../../hdd/u202220081001015/data/ibrnet_collected_1/"
-        self.folder_path2 = "../../../hdd/u202220081001015/data/ibrnet_collected_2/"
+        self.folder_path1 = "data/ibrnet_collected_1/"
+        self.folder_path2 = "data/ibrnet_collected_2/"
         self.rectify_inplane_rotation = args.rectify_inplane_rotation
         self.mode = mode  # train / test / validation
-        # if mode == 'train':
-        #     self.num_source_views = np.random.randint(low=1, high=10)
-        # else :
-        #     self.num_source_views = args.num_source_views
         self.num_source_views = args.num_source_views
         self.random_crop = random_crop
 
@@ -42,7 +38,6 @@ class IBRNetCollectedDataset(Dataset):
                 factor = 8
             else:
                 factor = 2
-                # factor = None
             _, poses, bds, render_poses, i_test, rgb_files = load_llff_data(
                 scene, load_imgs=False, factor=factor
             )
@@ -78,7 +73,6 @@ class IBRNetCollectedDataset(Dataset):
 
     def __getitem__(self, idx):
         rgb_file = self.render_rgb_files[idx]
-        # print("imgpath:",rgb_file)
         rgb = cv2.imread(rgb_file).astype(np.float32) / 255.0
         render_pose = self.render_poses[idx]
         intrinsics = self.render_intrinsics[idx]
@@ -142,11 +136,8 @@ class IBRNetCollectedDataset(Dataset):
         src_rgbs = np.stack(src_rgbs, axis=0)
         src_cameras = np.stack(src_cameras, axis=0)
 
-        if self.mode == "train" and self.random_crop:
-            rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(320, 432))
-
-        # if self.mode == "train" and np.random.choice([0, 1], p=[0.5, 0.5]):
-        #     rgb, camera, src_rgbs, src_cameras = random_flip(rgb, camera, src_rgbs, src_cameras)
+        # if self.mode == "train" and self.random_crop:
+        #     rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(320, 432))
 
         depth_range = torch.tensor([depth_range[0] * 0.9, depth_range[1] * 1.5])
 
