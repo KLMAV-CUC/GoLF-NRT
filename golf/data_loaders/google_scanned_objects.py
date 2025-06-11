@@ -13,7 +13,7 @@ from .data_utils import rectify_inplane_rotation, get_nearest_pose_ids, random_c
 # only for training
 class GoogleScannedDataset(Dataset):
     def __init__(self, args, mode, random_crop=True, **kwargs):
-        self.folder_path = "../../../hdd/u202220081001015/data/google_scanned_objects/"
+        self.folder_path = "data/google_scanned_objects/"
         self.num_source_views = args.num_source_views
         self.mode = mode  # train / test / validation
         self.random_crop = random_crop
