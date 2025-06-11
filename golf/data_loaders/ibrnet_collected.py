@@ -14,8 +14,8 @@ from .llff_data_utils import load_llff_data, batch_parse_llff_poses
 
 class IBRNetCollectedDataset(Dataset):
     def __init__(self, args, mode, random_crop=True, **kwargs):
-        self.folder_path1 = "data/ibrnet_collected_1/"
-        self.folder_path2 = "data/ibrnet_collected_2/"
+        self.folder_path1 = os.path.join(args.rootdir, "data/ibrnet_collected_1/")
+        self.folder_path2 = os.path.join(args.rootdir, "data/ibrnet_collected_2/")
         self.rectify_inplane_rotation = args.rectify_inplane_rotation
         self.mode = mode  # train / test / validation
         self.num_source_views = args.num_source_views
