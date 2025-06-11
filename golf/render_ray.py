@@ -5,21 +5,21 @@ from collections import OrderedDict
 # helper functions for nerf ray rendering
 ########################################################################################################################
 
-# 基于核回归的采样方法 
+# Kernel regression 
 def sample_pdf_g(bins, weights, N_samples, det=True):
-    def ker(x, y, h=0.03):   # 核函数
+    def ker(x, y, h=0.03):   # kernek function
         x = x.unsqueeze(-1)  # Add a singleton dimension for broadcasting
         y = y.unsqueeze(-2)   # Add a singleton dimension for broadcasting
         return torch.exp(-(x - y)**2 / (2 * h**2)) / h
 
-    def KR(x, X, Y):   # 核回归
+    def KR(x, X, Y):   # Kernel regression
         K = ker(x, X)
         Y = Y.unsqueeze(-2)
         y = torch.sum(Y * K, dim=-1)
         K_sum = torch.sum(K, dim=-1)
         return y / K_sum
 
-    # 权重归一化
+    # weights normlization
     weights += 1e-5
     pdf = weights / torch.sum(weights, dim=-1, keepdim=True)  # [N_rays, M]
     dx = (bins[:,1] - bins[:,0]).unsqueeze(-1)
@@ -55,56 +55,7 @@ def sample_pdf_g(bins, weights, N_samples, det=True):
 
     return samples
 
-# 原始采样方法  
-def sample_pdf(bins, weights, N_samples, det=False):
-    """
-    :param bins: tensor of shape [N_rays, M+1], M is the number of bins
-    :param weights: tensor of shape [N_rays, M]
-    :param N_samples: number of samples along each ray
-    :param det: if True, will perform deterministic sampling
-    :return: [N_rays, N_samples]
-    """
-
-    M = weights.shape[1]
-    weights += 1e-5
-    # Get pdf
-    pdf = weights / torch.sum(weights, dim=-1, keepdim=True)  # [N_rays, M]
-    cdf = torch.cumsum(pdf, dim=-1)  # [N_rays, M]
-    cdf = torch.cat([torch.zeros_like(cdf[:, 0:1]), cdf], dim=-1)  # [N_rays, M+1]
-
-    # Take uniform samples
-    if det:
-        u = torch.linspace(0.0, 1.0, N_samples, device=bins.device)
-        u = u.unsqueeze(0).repeat(bins.shape[0], 1)  # [N_rays, N_samples]
-    else:
-        u = torch.rand(bins.shape[0], N_samples, device=bins.device)
-
-    # Invert CDF
-    above_inds = torch.zeros_like(u, dtype=torch.long)  # [N_rays, N_samples]
-    for i in range(M):
-        above_inds += (u >= cdf[:, i : i + 1]).long()
-
-    # random sample inside each bin
-    below_inds = torch.clamp(above_inds - 1, min=0)
-    inds_g = torch.stack((below_inds, above_inds), dim=2)  # [N_rays, N_samples, 2]
-
-    cdf = cdf.unsqueeze(1).repeat(1, N_samples, 1)  # [N_rays, N_samples, M+1]
-    cdf_g = torch.gather(input=cdf, dim=-1, index=inds_g)  # [N_rays, N_samples, 2]
-
-    bins = bins.unsqueeze(1).repeat(1, N_samples, 1)  # [N_rays, N_samples, M+1]
-    bins_g = torch.gather(input=bins, dim=-1, index=inds_g)  # [N_rays, N_samples, 2]
-
-    # t = (u-cdf_g[:, :, 0]) / (cdf_g[:, :, 1] - cdf_g[:, :, 0] + TINY_NUMBER)  # [N_rays, N_samples]
-    # fix numeric issue
-    denom = cdf_g[:, :, 1] - cdf_g[:, :, 0]  # [N_rays, N_samples]
-    denom = torch.where(denom < 1e-5, torch.ones_like(denom), denom)
-    t = (u - cdf_g[:, :, 0]) / denom
-
-    samples = bins_g[:, :, 0] + t * (bins_g[:, :, 1] - bins_g[:, :, 0])
-
-    return samples
-
-# 粗采样--均匀采样
+# uniform
 def sample_along_camera_ray(ray_o, ray_d, depth_range, N_samples, inv_uniform=False, det=False):
     """
     :param ray_o: origin of the ray in scene coordinate system; tensor of shape [N_rays, 3]
@@ -216,12 +167,12 @@ def render_rays(
     :return: {'outputs_coarse': {}, 'outputs_fine': {}}
     """
 
-    glob_feat = get_globfeat(ray_batch, featmaps[0], model) #(N_rays,32)获得全局特征
+    glob_feat = get_globfeat(ray_batch, featmaps[0], model) #(N_rays,32)
     
     ret = {"outputs_coarse": None, "outputs_fine": None}
     ray_o, ray_d = ray_batch["ray_o"], ray_batch["ray_d"]
 
-    # 粗采样阶段
+    # coarse
     # pts: [N_rays, N_samples, 3], z_vals: [N_rays, N_samples]
     pts, z_vals = sample_along_camera_ray(
         ray_o=ray_o,
@@ -230,7 +181,7 @@ def render_rays(
         N_samples=N_samples,
         inv_uniform=inv_uniform,
         det=det,
-    ) # 沿着极线采样空间点
+    )
 
     N_rays, N_samples = pts.shape[:2]
     rgb_feat, ray_diff, mask = projector.compute(
@@ -239,7 +190,7 @@ def render_rays(
         ray_batch["src_rgbs"],
         ray_batch["src_cameras"],
         featmaps=featmaps[1],
-    )  # [N_rays, N_samples, N_views, x] 提取极线特征
+    )  # [N_rays, N_samples, N_views, x]
 
     rgb, coarse_feat = model.net_coarse(rgb_feat, ray_diff, mask, pts, ray_d, glob_feat, query_feat=None)
     if ret_alpha:
@@ -251,7 +202,7 @@ def render_rays(
         depth_map = None
     ret["outputs_coarse"] = {"rgb": rgb, "weights": weights, "depth": depth_map}
 
-    # 细采样阶段
+    # fine
     if N_importance > 0:
         weights = ret["outputs_coarse"]["weights"].clone().detach()  # [N_rays, N_samples]
         pts, z_vals = sample_fine_pts(
@@ -273,7 +224,6 @@ def render_rays(
         # depth_map = torch.sum(weights[:,1:] * z_vals, dim=-1)
         depth_map = None
         
-        # 将粗细阶段的渲染结果相加
         rgb = rgb + ret["outputs_coarse"]["rgb"]
         ret["outputs_fine"] = {"rgb": rgb, "weights": weights, "depth": depth_map}
 
