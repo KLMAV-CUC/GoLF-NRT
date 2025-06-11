@@ -1,7 +1,7 @@
 import torch
 import os
-from gnt.transformer_network import GNT
-from gnt.feature_network import ResUNet
+from golf.transformer_network import GoLF
+from golf.feature_network import ResUNet
 
 from srt.encoder import GLNT_E
 from srt.decoder import GLNT_D
@@ -19,7 +19,7 @@ class GOLFModel(object):
         self.args = args
         device = torch.device("cuda:{}".format(args.local_rank))
         # create coarse GNT
-        self.net_coarse = GNT(
+        self.net_coarse = GoLF(
             args,
             in_feat_ch=self.args.coarse_feat_dim,
             posenc_dim=3 + 3 * 2 * 10,
@@ -30,7 +30,7 @@ class GOLFModel(object):
         if args.single_net:
             self.net_fine = None
         else:
-            self.net_fine = GNT(
+            self.net_fine = GoLF(
                 args,
                 in_feat_ch=self.args.fine_feat_dim,
                 posenc_dim=3 + 3 * 2 * 10,
@@ -137,24 +137,13 @@ class GOLFModel(object):
         else:
             to_load = torch.load(filename)
 
-        if load_opt and int(filename[-10:-4]) != 250000 :
-            self.optimizer.load_state_dict(to_load["optimizer"])
-        if load_scheduler and int(filename[-10:-4]) != 250000 :
-            self.scheduler.load_state_dict(to_load["scheduler"])
+        self.optimizer.load_state_dict(to_load["optimizer"])
+        self.scheduler.load_state_dict(to_load["scheduler"])
 
         self.net_coarse.load_state_dict(to_load["net_coarse"])
-        # if int(filename[-10:-4]) == 250000 :
-        #     model_dict = self.feature_net.state_dict()
-        #     pre_dict = to_load["feature_net"]
-        #     model_dict.update(pre_dict)
-        #     self.feature_net.load_state_dict(model_dict)
-        # else:
-        #     self.feature_net.load_state_dict(to_load["feature_net"])
         self.feature_net.load_state_dict(to_load["feature_net"])
-
-        if "global_encoder" in to_load:
-            self.global_encoder.load_state_dict(to_load["global_encoder"])
-            self.global_decoder.load_state_dict(to_load["global_decoder"])
+        self.global_encoder.load_state_dict(to_load["global_encoder"])
+        self.global_decoder.load_state_dict(to_load["global_decoder"])
 
         if self.net_fine is not None and "net_fine" in to_load.keys():
             self.net_fine.load_state_dict(to_load["net_fine"])
