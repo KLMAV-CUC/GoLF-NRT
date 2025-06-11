@@ -12,7 +12,7 @@ from .llff_data_utils import load_llff_data, batch_parse_llff_poses
 
 class LLFFDataset(Dataset):
     def __init__(self, args, mode, **kwargs):
-        base_dir = "data/real_iconic_noface/"
+        base_dir = os.path.join(args.rootdir, "data/real_iconic_noface/")
         self.args = args
         self.mode = mode  # train / test / validation
         self.num_source_views = args.num_source_views
