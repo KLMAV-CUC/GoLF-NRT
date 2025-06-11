@@ -132,32 +132,6 @@ class RaySamplerSingleImage(object):
             raise Exception("unknown sample mode!")
 
         return select_inds
-    
-    def random_sample_patch(self, half_patch=12):
-        h = np.arange(half_patch, self.H - half_patch)
-        w = np.arange(half_patch, self.W - half_patch)
-        h = np.random.choice(h)
-        w = np.random.choice(w)
-        rays_o = self.rays_o.reshape(self.H, self.W, 3)[h-half_patch:h+half_patch+1,w-half_patch:w+half_patch+1,:]
-        rays_d = self.rays_d.reshape(self.H, self.W, 3)[h-half_patch:h+half_patch+1,w-half_patch:w+half_patch+1,:]
-        if self.rgb is not None:
-            rgb = self.rgb.reshape(self.H, self.W, 3)[h-half_patch:h+half_patch+1,w-half_patch:w+half_patch+1,:]
-            rgb = rgb.reshape(-1, 3)
-        else:
-            rgb = None
-        
-        rays_d = rays_d.reshape(-1, 3)
-        rays_o = rays_o.reshape(-1, 3)
-        ret = {
-            "ray_o": rays_o.cuda(),
-            "ray_d": rays_d.cuda(),
-            "camera": self.camera.cuda(),
-            "depth_range": self.depth_range.cuda(),
-            "rgb": rgb.cuda() if rgb is not None else None,
-            "src_rgbs": self.src_rgbs.cuda() if self.src_rgbs is not None else None,
-            "src_cameras": self.src_cameras.cuda() if self.src_cameras is not None else None,
-        }
-        return ret
 
     def random_sample(self, N_rand, sample_mode, center_ratio=0.8):
         """
