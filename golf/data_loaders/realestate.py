@@ -39,12 +39,8 @@ def parse_pose_file(file):
 # only for training
 class RealEstateDataset(Dataset):
     def __init__(self, args, mode, **kwargs):
-        self.folder_path = "../../../hdd/u202220081001015/data/RealEstate10K-subset/"
+        self.folder_path = "data/RealEstate10K-subset/"
         self.mode = mode  # train / test / validation
-        # if mode == 'train':
-        #     self.num_source_views = np.random.randint(low=1, high=10)
-        # else :
-        #     self.num_source_views = args.num_source_views
         self.num_source_views = args.num_source_views
         self.target_h, self.target_w = 720, 1280
         assert mode in ["train", "test"]
@@ -63,8 +59,6 @@ class RealEstateDataset(Dataset):
             all_timestamps.append(np.array(timestamps)[sorted_ids])
 
         index = np.arange(len(all_rgb_files))
-        # self.all_rgb_files = np.array(all_rgb_files)[index]
-        # self.all_timestamps = np.array(all_timestamps)[index]
         self.all_rgb_files = all_rgb_files
         self.all_timestamps = all_timestamps
 
@@ -93,7 +87,6 @@ class RealEstateDataset(Dataset):
         )
 
         rgb_file = rgb_files[id_render]
-        # print("imgpath:",rgb_files[id_render])
         rgb = imageio.imread(rgb_files[id_render])
         # resize the image to target size
         # rgb = cv2.resize(rgb, dsize=(self.target_w, self.target_h), interpolation=cv2.INTER_AREA)
@@ -144,8 +137,8 @@ class RealEstateDataset(Dataset):
         src_rgbs = np.stack(src_rgbs)
         src_cameras = np.stack(src_cameras)
 
-        if self.mode == "train":
-            rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(384, 576))
+        # if self.mode == "train":
+        #     rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(384, 576))
 
         return {
             "rgb": torch.from_numpy(rgb),
