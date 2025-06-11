@@ -241,9 +241,7 @@ class ResUNet(nn.Module):
 
         # fine-level conv
         self.out_conv1 = nn.Conv2d(filters[1], out_ch, 1, 1)
-        # self.out_conv1 = nn.Conv2d(filters[2], out_ch, 1, 1)  # 1/16时使用这个
         self.out_conv2 = nn.Conv2d(out_ch, out_ch, 1, 1)
-        # self.out_conv3 = nn.Conv2d(64, out_ch, 1, 1)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
         norm_layer = self._norm_layer
@@ -291,39 +289,14 @@ class ResUNet(nn.Module):
         diffX = x2.size()[3] - x1.size()[3]
 
         x1 = F.pad(x1, (diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2))
-
         # for padding issues, see
         # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
         # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
-
         x = torch.cat([x2, x1], dim=1)
         return x
 
-    # 全局1/16
-    # def forward(self, x):
-    #     x = self.relu(self.bn1(self.conv1(x))) # 1/2
-
-    #     x1 = self.layer1(x) # 1/4
-    #     x2 = self.layer2(x1) # 1/8
-    #     f1 = self.layer3(x2) # 1/16
-
-    #     x = self.upconv3(f1) 
-    #     x = self.skipconnect(x2, x)
-    #     x = self.iconv3(x) # 1/8
-
-    #     x = self.upconv2(x)
-    #     x = self.skipconnect(x1, x)
-    #     f2 = self.iconv2(x) # 1/4
-
-    #     x_out1 = self.out_conv1(f1)
-    #     x_out2 = self.out_conv2(f2)
-
-    #     return x_out1, x_out2
-
-    # 全局1/8
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x))) # 1/2
-        # x_out3 = self.out_conv3(x)
 
         x1 = self.layer1(x) # 1/4
         x2 = self.layer2(x1) # 1/8
@@ -341,4 +314,3 @@ class ResUNet(nn.Module):
         x_out2 = self.out_conv2(f2)
 
         return x_out1, x_out2
-        # return x_out1, x_out2, x_out3
