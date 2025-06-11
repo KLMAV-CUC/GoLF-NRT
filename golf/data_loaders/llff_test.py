@@ -12,7 +12,7 @@ from .llff_data_utils import load_llff_data, batch_parse_llff_poses
 
 class LLFFTestDataset(Dataset):
     def __init__(self, args, mode, scenes=(), random_crop=False, **kwargs):
-        self.folder_path = "../../../hdd/u202220081001015/data/nerf_llff_data/"
+        self.folder_path = "data/nerf_llff_data/"
         self.args = args
         self.mode = mode  # train / test / validation
         self.num_source_views = args.num_source_views
