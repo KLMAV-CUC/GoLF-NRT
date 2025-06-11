@@ -1,5 +1,5 @@
 ### INPUT
-expname = gnt_llff
+expname = golf_llff
 rootdir = ./
 render_stride = 2
 distributed = False
