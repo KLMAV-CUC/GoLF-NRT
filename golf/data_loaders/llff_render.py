@@ -12,8 +12,7 @@ from .llff_data_utils import load_llff_data, batch_parse_llff_poses
 
 class LLFFRenderDataset(Dataset):
     def __init__(self, args, scenes="fern", **kwargs):
-
-        self.folder_path = "data/nerf_llff_data/"
+        self.folder_path = os.path.join(args.rootdir, "data/nerf_llff_data/")
         self.num_source_views = args.num_source_views
 
         print("loading {} for rendering".format(scenes))
