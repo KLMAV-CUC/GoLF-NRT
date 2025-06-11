@@ -5,7 +5,6 @@ import math
 from typing import Type, Callable, Tuple
 from timm.models.layers import trunc_normal_, Mlp, DropPath
 
-# 网格和窗口的划分和还原
 def window_partition(
         input: torch.Tensor,
         window_size: Tuple[int, int] = (7, 7)
@@ -21,7 +20,6 @@ def window_partition(
     """
     # Get size of input
     B, C, H, W = input.shape
-    # print("input:",input.shape)
     # Unfold input
     windows = input.view(B, C, H // window_size[0], window_size[0], W // window_size[1], window_size[1])
     # Permute and reshape to [B * windows, window_size[0], window_size[1], channels]
@@ -124,7 +122,7 @@ def get_relative_position_index(
     relative_coords[:, :, 0] *= 2 * win_w - 1
     return relative_coords.sum(-1)
 
-# self_attention 核心模块
+# self_attention
 class RelativeSelfAttention(nn.Module):
     """ Relative Self-Attention similar to Swin V1. Implementation inspired by Timms Swin V1 implementation.
 
@@ -210,7 +208,7 @@ class RelativeSelfAttention(nn.Module):
         output = self.proj_drop(output)
         return output
     
-# Transformer 核心模块
+# Transformer
 class MaxViTTransformerBlock(nn.Module):
     """ MaxViT Transformer block.
 
@@ -289,7 +287,6 @@ class MaxViTTransformerBlock(nn.Module):
         """
         # Save original shape
         B, C, H, W = input.shape
-        # 自适应窗口大小
 
         # Perform partition
         input_partitioned = self.partition_function(input, self.grid_window_size) #(n_view*n_patch,win_size1,winsize2,c)
