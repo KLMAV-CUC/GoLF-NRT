@@ -14,7 +14,7 @@ def de_parallel(model):
 ########################################################################################################################
 
 
-class GOLFModel(object):
+class GoLFModel(object):
     def __init__(self, args, load_opt=True, load_scheduler=True):
         self.args = args
         device = torch.device("cuda:{}".format(args.local_rank))
