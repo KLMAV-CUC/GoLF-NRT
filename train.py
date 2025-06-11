@@ -8,17 +8,17 @@ import torch.utils.tensorboard as tb
 
 from torch.utils.data import DataLoader
 
-from gnt.data_loaders import dataset_dict
-from gnt.render_ray import render_rays
-from gnt.render_image import render_single_image
-from gnt.model import GOLFModel
-from gnt.sample_ray import RaySamplerSingleImage
-from gnt.criterion import Criterion
+from golf.data_loaders import dataset_dict
+from golf.render_ray import render_rays
+from golf.render_image import render_single_image
+from golf.model import GoLFModel
+from golf.sample_ray import RaySamplerSingleImage
+from golf.criterion import Criterion
 from utils import img2mse, mse2psnr, img_HWC2CHW, img2psnr
 import config
 import torch.distributed as dist
-from gnt.projection import Projector
-from gnt.data_loaders.create_training_dataset import create_training_dataset
+from golf.projection import Projector
+from golf.data_loaders.create_training_dataset import create_training_dataset
 import imageio
 from os import path
 
@@ -43,7 +43,6 @@ def synchronize():
 
 
 def train(args):
-    ###### 设定设备、配置文件 ######
     device = "cuda:{}".format(args.local_rank)
     out_folder = os.path.join(args.rootdir, "out", args.expname)
     print("outputs will be saved to {}".format(out_folder))
@@ -62,7 +61,6 @@ def train(args):
             shutil.copy(args.config, f)
     ##############################################################
 
-    ###### 创建训练、验证数据集batch_size=1 ######
     train_dataset, train_sampler = create_training_dataset(args)
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -75,12 +73,10 @@ def train(args):
     )
     val_dataset = dataset_dict[args.eval_dataset](args, "validation", scenes=args.eval_scenes)
     val_loader = DataLoader(val_dataset, batch_size=1)
-    # val_loader_iterator = iter(cycle(val_loader))
     val_loader_iterator = iter(val_loader)
     ##############################################################
 
-    ###### 创建模型、极线映射、损失计算 ######
-    model = GOLFModel(
+    model = GoLFModel(
         args, load_opt=not args.no_load_opt, load_scheduler=not args.no_load_scheduler
     )
     projector = Projector(device=device)
@@ -88,13 +84,11 @@ def train(args):
     ##############################################################
     scalars_to_log = {}
 
-    ###### 保存日志 ######
     os.makedirs(args.rootdir, exist_ok=True)
     shutil.rmtree(path.join(args.rootdir, 'log/train'), ignore_errors=True)
     logger = tb.SummaryWriter(path.join(args.rootdir, 'log/train'), flush_secs=1)
     ##############################################################
 
-    ###### 迭代主函数 ######
     global_step = model.start_step + 1
     epoch = 0
     while global_step < model.start_step + args.n_iters + 1:
@@ -106,7 +100,7 @@ def train(args):
             ray_sampler = RaySamplerSingleImage(train_data, device)
             N_rand = int(
                 1.0 * args.N_rand * args.num_source_views / train_data["src_rgbs"][0].shape[0]
-            ) # 采样光线数
+            ) 
             ray_batch = ray_sampler.random_sample(
                 N_rand,
                 sample_mode=args.sample_mode,
@@ -125,10 +119,9 @@ def train(args):
                 white_bkgd=args.white_bkgd,
                 ret_alpha=args.N_importance > 0,
                 single_net=args.single_net,
-            ) # 视图合成主函数
+            ) 
 
             model.optimizer.zero_grad()
-            # loss, scalars_to_log = criterion(ret["outputs_coarse"], ray_batch, scalars_to_log)
             if ret["outputs_fine"] is not None:
                 fine_loss, scalars_to_log = criterion(ret["outputs_fine"], ray_batch, scalars_to_log)
                 loss = fine_loss
@@ -144,10 +137,6 @@ def train(args):
             # Rest is logging
             if args.local_rank == 0:
                 if global_step % args.i_print == 0 or global_step < 10:
-                    # mse_error = img2mse(ret["outputs_coarse"]["rgb"], ray_batch["rgb"]).item()
-                    # scalars_to_log["train/coarse-loss"] = mse_error
-                    # scalars_to_log["train/coarse-psnr-training-batch"] = mse2psnr(mse_error)
-                    # logger.add_scalar('train/coarse-loss', mse_error, global_step=global_step)
                     if ret["outputs_fine"] is not None:
                         mse_error = img2mse(ret["outputs_fine"]["rgb"], ray_batch["rgb"]).item()
                         scalars_to_log["train/fine-psnr-training-batch"] = mse2psnr(mse_error)
@@ -259,19 +248,12 @@ def log_view(
     rgb_im[:, : rgb_gt.shape[-2], : rgb_gt.shape[-1]] = rgb_gt
     rgb_im[:, : rgb_pred.shape[-2], w_max : w_max + rgb_pred.shape[-1]] = rgb_pred
     depth_im = None
-    # if "depth" in ret["outputs_coarse"].keys():
-    #     depth_pred = ret["outputs_coarse"]["depth"].detach().cpu()
-    #     depth_im = img_HWC2CHW(colorize(depth_pred, cmap_name="jet"))
-    # else:
-    #     depth_im = None
 
     if ret["outputs_fine"] is not None:
         rgb_fine = img_HWC2CHW(ret["outputs_fine"]["rgb"].detach().cpu())
         rgb_fine_ = torch.zeros(3, h_max, w_max)
         rgb_fine_[:, : rgb_fine.shape[-2], : rgb_fine.shape[-1]] = rgb_fine
         rgb_im = torch.cat((rgb_im, rgb_fine_), dim=-1)
-        # depth_pred = torch.cat((depth_pred, ret["outputs_fine"]["depth"].detach().cpu()), dim=-1)
-        # depth_im = img_HWC2CHW(colorize(depth_pred, cmap_name="jet"))
 
     rgb_im = rgb_im.permute(1, 2, 0).detach().cpu().numpy()
     rgb_im = np.uint8(np.clip((rgb_im * 255.0), 0, 255))
