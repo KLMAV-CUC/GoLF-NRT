@@ -12,7 +12,7 @@ from .llff_data_utils import load_llff_data, batch_parse_llff_poses
 
 class LLFFDataset(Dataset):
     def __init__(self, args, mode, **kwargs):
-        base_dir = "../../../hdd/u202220081001015/data/real_iconic_noface/"
+        base_dir = "data/real_iconic_noface/"
         self.args = args
         self.mode = mode  # train / test / validation
         self.num_source_views = args.num_source_views
@@ -65,7 +65,6 @@ class LLFFDataset(Dataset):
 
     def __getitem__(self, idx):
         rgb_file = self.render_rgb_files[idx]
-        # print("imgpath:",rgb_file)
         rgb = imageio.imread(rgb_file).astype(np.float32) / 255.0
         render_pose = self.render_poses[idx]
         intrinsics = self.render_intrinsics[idx]
@@ -121,16 +120,9 @@ class LLFFDataset(Dataset):
 
         src_rgbs = np.stack(src_rgbs, axis=0)
         src_cameras = np.stack(src_cameras, axis=0)
+
         # if self.mode == "train":
-        #     crop_h = np.random.randint(low=250, high=750)
-        #     crop_h = crop_h + 1 if crop_h % 2 == 1 else crop_h
-        #     crop_w = int(400 * 600 / crop_h)
-        #     crop_w = crop_w + 1 if crop_w % 2 == 1 else crop_w
-        #     rgb, camera, src_rgbs, src_cameras = random_crop(
-        #         rgb, camera, src_rgbs, src_cameras, (crop_h, crop_w)
-        #     )
-        if self.mode == "train":
-            rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(384, 576))
+        #     rgb, camera, src_rgbs, src_cameras = random_crop(rgb, camera, src_rgbs, src_cameras, size=(384, 576))
 
         if self.mode == "train" and np.random.choice([0, 1]):
             rgb, camera, src_rgbs, src_cameras = random_flip(rgb, camera, src_rgbs, src_cameras)
