@@ -13,8 +13,7 @@ import cv2
 
 class ShinyDataset(Dataset):
     def __init__(self, args, mode, scenes=(), random_crop=True, **kwargs):
-        # self.folder_path = os.path.join(args.rootdir, "data/shiny/")
-        self.folder_path = "../../../hdd/u202220081001015/data/shiny/"
+        self.folder_path = os.path.join(args.rootdir, "data/shiny/")
         self.args = args
         self.mode = mode  # train / test / validation
         self.num_source_views = args.num_source_views
@@ -113,11 +112,7 @@ class ShinyDataset(Dataset):
         rgb = cv2.resize(rgb_o, (288, 256), interpolation=cv2.INTER_AREA)
 
         render_pose = self.render_poses[idx]
-        intrinsics_o = self.render_intrinsics[idx]
-        # resize
-        intrinsics = intrinsics_o.copy()
-        intrinsics[0,:] = intrinsics_o[0,:] * 288/240
-        intrinsics[1,:] = intrinsics_o[1,:] * 256/135
+        intrinsics = self.render_intrinsics[idx]
 
         depth_range = self.render_depth_range[idx]
 
@@ -166,11 +161,7 @@ class ShinyDataset(Dataset):
             src_rgb = cv2.resize(src_rgb_o, (288, 256), interpolation=cv2.INTER_AREA)
 
             train_pose = train_poses[id]
-            train_intrinsics_o = train_intrinsics[id]
-            # resize
-            train_intrinsics_ = train_intrinsics_o.copy()
-            train_intrinsics_[0,:] = train_intrinsics_o[0,:] * 288/240
-            train_intrinsics_[1,:] = train_intrinsics_o[1,:] * 256/135
+            train_intrinsics_ = train_intrinsics[id]
 
             src_rgbs.append(src_rgb)
             img_size = src_rgb.shape[:2]
