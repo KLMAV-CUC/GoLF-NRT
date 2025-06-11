@@ -39,7 +39,7 @@ def parse_pose_file(file):
 # only for training
 class RealEstateDataset(Dataset):
     def __init__(self, args, mode, **kwargs):
-        self.folder_path = "data/RealEstate10K-subset/"
+        self.folder_path = os.path.join(args.rootdir, "data/RealEstate10K-subset/")
         self.mode = mode  # train / test / validation
         self.num_source_views = args.num_source_views
         self.target_h, self.target_w = 720, 1280
