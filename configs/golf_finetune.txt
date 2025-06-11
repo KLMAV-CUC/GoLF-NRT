@@ -1,5 +1,5 @@
 ### INPUT
-expname = gnt_horns
+expname = golf_horns
 rootdir = ./
 no_reload = False
 render_stride = 2
