@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-# 正余弦编码
+# sin-cos
 class Embedder(nn.Module):
     def __init__(self, **kwargs):
         super(Embedder, self).__init__()
@@ -202,9 +202,9 @@ class Transformer(nn.Module):
             return x
 
 
-class GNT(nn.Module):
+class GoLF(nn.Module):
     def __init__(self, args, in_feat_ch=32, posenc_dim=3, viewenc_dim=3, ret_alpha=False):
-        super(GNT, self).__init__()
+        super(GoLF, self).__init__()
         self.rgbfeat_fc = nn.Sequential(
             nn.Linear(in_feat_ch + 3, args.netwidth),
             nn.ReLU(),
@@ -317,7 +317,6 @@ class GNT(nn.Module):
         # normalize & rgb
         h = self.norm(q_rgb).mean(dim=1)
         if query_feat is not None:
-            # 在特征上相加
             h = h + coarse_feat
         outputs = self.rgb_fc(h)
         if self.ret_alpha:
