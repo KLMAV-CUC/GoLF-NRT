@@ -1,7 +1,50 @@
-# GoLF-NRT: Integrating Global Context and Local Geometry for Few-Shot View Synthesis
-![image](https://github.com/KLMAV-CUC/GOLF-NRT/blob/main/1view.png)
-<p align="center">Qualitative comparison of GoLF-NRT with GNT, EVE-NeRF and CaesarNeRF with 1 input views. The first, second, and third rows correspond to the Trex scene from LLFF, the Drums scene from Blender, and the CD scene from Shiny, respectively. Each image triplet includes: the reconstructed image on the left, a zoomed-in view on the upper right, and the error map corresponding to the zoomed-in view on the lower right.</p>
+## Data preparation
 
-Neural Radiance Fields (NeRF) have transformed novel view synthesis by modeling scene-specific volumetric representations directly from images. While generalizable NeRF models can generate novel views across unknown scenes by learning latent ray representations, their performance heavily depends on a large number of multi-view observations. However, with limited input views, these methods experience significant degradation in rendering quality. To address this limitation, we propose GoLF-NRT: a Global and Local feature Fusion-based Neural Rendering Transformer. GoLF-NRT enhances generalizable neural rendering from few input views by leveraging a 3D transformer with efficient sparse attention to capture global scene context. In parallel, it integrates local geometric features extracted along the epipolar line, enabling high-quality scene reconstruction from as few as 1 to 3 input views. Furthermore, we introduce an adaptive sampling strategy based on attention weights and kernel regression, improving the accuracy of transformer-based neural rendering. Extensive experiments on public datasets show that GoLF-NRT achieves state-of-the-art performance across varying numbers of input views, highlighting the effectiveness and superiority of our approach.
+Please follow original setting of [GNT](https://github.com/VITA-Group/GNT) to prepare the data.
 
-Code is coming soon.
+## Usage (under construction)
+
+Please prepare the environment as follows.
+
+```
+conda create -n golfnrt python=3.8
+conda activate golfnrt
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+Additionally dependencies include:
+```
+ConfigArgParse
+imageio
+matplotlib
+opencv_contrib_python
+Pillow
+scipy
+imageio-ffmpeg
+lpips
+scikit-image
+termcolor
+easydict
+scikit-video
+timm
+einops
+```
+
+After setting up the environment and perparing the data, you can train and test the code following [GNT](https://github.com/VITA-Group/GNT).
+
+## Evaluation
+```
+python eval.py --config configs/golf_full.txt --expname golf_full --chunk_size 4096 --run_val
+```
+
+
+## Citing
+If you find our work helpful, please feel free to use the following BibTex entry:
+```BibTeX
+@article{zhu2023caesarnerf,
+    author  = {Wang, You and Fang, Li and Zhu, Hao and Hu, Fei and Ye, Long and Ma, Zhan},
+    title   = {GoLF-NRT: Integrating Global Context and Local Geometry for Few Shot View Synthesis},
+    booktitle = {CVPR},
+    year    = {2025}
+}
+```
